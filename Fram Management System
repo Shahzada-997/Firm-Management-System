@@ -1,0 +1,295 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_ANIMALS 100
+#define MAX_SPECIES_LENGTH 50
+#define MAX_USERNAME_LENGTH 20
+#define MAX_PASSWORD_LENGTH 20
+#define FILENAME "animals.txt"
+
+// Struct to hold animal information
+struct Animal {
+    char species[MAX_SPECIES_LENGTH];
+    int age;
+    char health_status[20];
+};
+
+// Function prototypes
+void saveAnimal(struct Animal newAnimal);
+void viewAnimals();
+void deleteAnimal(int index);
+int adminLogin();
+void logout();
+void saveToFile();
+void loadFromFile();
+void adminMenu();
+void customerMenu();
+void buyAnimal();
+
+int animalCount = 0;
+struct Animal animals[MAX_ANIMALS];
+char username[MAX_USERNAME_LENGTH];
+char password[MAX_PASSWORD_LENGTH];
+int isLoggedIn = 0;
+int isAdmin = 0;
+
+int main() {
+    loadFromFile(); // Load data from file at the beginning
+
+    printf("Welcome to the Shahzada Animal Management System!\n");
+
+    int choice;
+    
+    do {
+        if (!isLoggedIn) {
+            printf("\nMenu:\n");
+            printf("1. Admin Login\n");
+            printf("2. Customer Login\n");
+            printf("3. Exit\n");
+            printf("Enter your choice: ");
+            scanf("%d", &choice);
+
+            switch (choice) {
+                case 1:
+                    isLoggedIn = adminLogin(); // Admin login
+                    isAdmin = isLoggedIn;
+                    if (isLoggedIn) {
+                        printf("\nWelcome, Admin!\n");
+                        adminMenu();
+                    }
+                    break;
+                case 2:
+                    isLoggedIn = 1; // Automatically log in as a customer
+                    isAdmin = 0;
+                    printf("\nWelcome, Customer!\n");
+                    customerMenu();
+                    break;
+                case 3:
+                    printf("\nExiting...\n");
+                    saveToFile(); // Save data to file before exiting
+                    break;
+                default:
+                    printf("\nInvalid choice. Please try again.\n");
+            }
+        }
+    } while (choice != 3);
+    
+    return 0;
+}
+
+void adminMenu() {
+    int choice;
+    do {
+        printf("\nAdmin Menu:\n");
+        printf("1. Add Animal\n");
+        printf("2. View Animals\n");
+        printf("3. Delete Animal\n");
+        printf("4. Logout\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: {
+                struct Animal newAnimal;
+                printf("\nEnter species: ");
+                scanf("%s", newAnimal.species);
+                printf("Enter age: ");
+                scanf("%d", &newAnimal.age);
+                printf("Enter health status: ");
+                scanf("%s", newAnimal.health_status);
+                saveAnimal(newAnimal);
+                break;
+            }
+            case 2:
+                viewAnimals();
+                break;
+            case 3: {
+                int index;
+                printf("\nEnter index of animal to delete: ");
+                scanf("%d", &index);
+                deleteAnimal(index - 1);
+                break;
+            }
+            case 4:
+                logout();
+                isLoggedIn = 0;
+                break;
+            case 5:
+                printf("\nExiting...\n");
+                saveToFile(); // Save data to file before exiting
+                break;
+            default:
+                printf("\nInvalid choice. Please try again.\n");
+        }
+    } while (choice != 5);
+}
+
+void customerMenu() {
+    int choice;
+    do {
+        printf("\nCustomer Menu:\n");
+        printf("1. View Animals\n");
+        printf("2. Buy Animal\n");
+        printf("3. Logout\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                viewAnimals();
+                break;
+            case 2:
+                buyAnimal();
+                break;
+            case 3:
+                logout();
+                isLoggedIn = 0;
+                break;
+            case 4:
+                printf("\nExiting...\n");
+                saveToFile(); // Save data to file before exiting
+                break;
+            default:
+                printf("\nInvalid choice. Please try again.\n");
+        }
+    } while (choice != 4);
+}
+
+void saveAnimal(struct Animal newAnimal) {
+    if (animalCount < MAX_ANIMALS) {
+        animals[animalCount++] = newAnimal;
+        printf("\nAnimal added successfully.\n");
+        saveToFile(); // Save data to file after adding an animal
+    } else {
+        printf("\nAnimal database is full.\n");
+    }
+}
+
+void viewAnimals() {
+    if (animalCount == 0) {
+        printf("\nNo animals to display.\n");
+    } else {
+        printf("\nAnimals:\n");
+        for (int i = 0; i < animalCount; i++) {
+            printf("%d. Species: %s, Age: %d, Health Status: %s\n", i + 1, animals[i].species, animals[i].age, animals[i].health_status);
+        }
+    }
+}
+
+void deleteAnimal(int index) {
+    if (index >= 0 && index < animalCount) {
+        for (int i = index; i < animalCount - 1; i++) {
+            animals[i] = animals[i + 1];
+        }
+        animalCount--;
+        printf("\nAnimal deleted successfully.\n");
+        saveToFile(); // Save data to file after deleting an animal
+    } else {
+        printf("\nInvalid index.\n");
+    }
+}
+
+void buyAnimal() {
+    if (animalCount == 0) {
+        printf("\nNo animals available to buy.\n");
+        return;
+    }
+
+    int index;
+    printf("\nEnter the index of the animal to buy: ");
+    scanf("%d", &index);
+    index--; // Adjust for 0-based index
+
+    if (index >= 0 && index < animalCount) {
+        printf("You selected: Species: %s, Age: %d, Health Status: %s\n", animals[index].species, animals[index].age, animals[index].health_status);
+        printf("Proceeding to payment...\n");
+
+        int paymentChoice;
+        printf("\nSelect Payment Method:\n");
+        printf("1. Credit Card\n");
+        printf("2. Debit Card\n");
+        printf("3. Mobile Banking\n");
+        printf("Enter your choice: ");
+        scanf("%d", &paymentChoice);
+
+        switch (paymentChoice) {
+            case 1:
+                printf("\nYou selected Credit Card.\n");
+                break;
+            case 2:
+                printf("\nYou selected Debit Card.\n");
+                break;
+            case 3:
+                printf("\nYou selected Mobile Banking.\n");
+                break;
+            default:
+                printf("\nInvalid choice.\n");
+                return;
+        }
+
+        printf("Successfully bought the animal using selected payment method.\n");
+
+        // Remove the bought animal from the list
+        deleteAnimal(index);
+    } else {
+        printf("\nInvalid index.\n");
+    }
+}
+
+int adminLogin() {
+    printf("\nEnter username: ");
+    scanf("%s", username);
+    
+    // Prompt for password
+    printf("Enter password: ");
+    scanf("%s", password);
+
+    // Set the fixed password and username for admin
+    char fixed_admin_username[MAX_USERNAME_LENGTH] = "shahzada";
+    char fixed_admin_password[MAX_PASSWORD_LENGTH] = "shahzada";
+   
+    // Check if the entered username and password match the fixed username and password
+    if (strcmp(username, fixed_admin_username) == 0 && strcmp(password, fixed_admin_password) == 0) {
+        printf("\nLogin successful.\n");
+        return 1;
+    } else {
+        printf("\nInvalid username or password.\n");
+        return 0;
+    }
+}
+
+void logout() {
+    printf("\nLogged out successfully.\n");
+    isLoggedIn = 0;
+    isAdmin = 0;
+}
+
+void saveToFile() {
+    FILE *file = fopen(FILENAME, "w");
+    if (file != NULL) {
+        for (int i = 0; i < animalCount; i++) {
+            fprintf(file, "%s %d %s\n", animals[i].species, animals[i].age, animals[i].health_status);
+        }
+        fclose(file);
+    } else {
+        printf("\nError opening file for writing.\n");
+    }
+}
+
+void loadFromFile() {
+    FILE *file = fopen(FILENAME, "r");
+    if (file != NULL) {
+        while (!feof(file) && animalCount < MAX_ANIMALS) {
+            struct Animal newAnimal;
+            if (fscanf(file, "%s %d %s", newAnimal.species, &newAnimal.age, newAnimal.health_status) == 3) {
+                animals[animalCount++] = newAnimal;
+            }
+        }
+        fclose(file);
+    } else {
+        printf("\nError opening file for reading.\n");
+    }
+}
